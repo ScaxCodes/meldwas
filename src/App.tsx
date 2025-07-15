@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { MapView } from "./components/Map/MapView";
 import { Sidebar } from "./components/Sidebar/Sidebar";
 import { ReportForm } from "./components/UI/ReportForm";
 import { ReportDetail } from "./components/UI/ReportDetail";
 import { dummyReports, currentUser } from "./utils/dummyData";
+import { useResponsive } from "./hooks/useResponsive";
 import type {
   Report,
   CreateReportData,
@@ -12,8 +13,9 @@ import type {
 } from "./types";
 
 function App() {
+  const { isMobile } = useResponsive();
   const [reports, setReports] = useState<Report[]>(dummyReports);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isReportFormOpen, setIsReportFormOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<
@@ -21,11 +23,16 @@ function App() {
   >("all");
   const [clickedLocation, setClickedLocation] = useState<Location | null>(null);
 
-  // Filter reports based on selected category
-  const filteredReports = reports.filter(
-    (report) =>
-      selectedCategory === "all" || report.category === selectedCategory
-  );
+  // Sidebar logic: Desktop always expanded, Mobile toggleable
+  const isSidebarVisible = isMobile ? isMobileSidebarOpen : true;
+
+  // Filter reports based on selected category (memoized for performance)
+  const filteredReports = useMemo(() => {
+    return reports.filter(
+      (report) =>
+        selectedCategory === "all" || report.category === selectedCategory
+    );
+  }, [reports, selectedCategory]);
 
   const handleCreateReport = () => {
     setIsReportFormOpen(true);
@@ -38,7 +45,7 @@ function App() {
 
   const handleReportSubmit = (data: CreateReportData) => {
     const newReport: Report = {
-      id: `report_${Date.now()}`,
+      id: crypto.randomUUID(),
       ...data,
       status: "pending",
       votes: { upvotes: 0, downvotes: 0 },
@@ -96,7 +103,7 @@ function App() {
 
   const handleAddComment = (reportId: string, content: string) => {
     const newComment = {
-      id: `comment_${Date.now()}`,
+      id: crypto.randomUUID(),
       userId: currentUser.id,
       userName: currentUser.name,
       content,
@@ -130,10 +137,15 @@ function App() {
       {/* Sidebar */}
       <Sidebar
         reports={reports}
-        isExpanded={isSidebarExpanded}
-        onToggleExpanded={() => setIsSidebarExpanded(!isSidebarExpanded)}
+        isMobile={isMobile}
+        isVisible={isSidebarVisible}
+        onToggleMobile={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         onCreateReport={handleCreateReport}
-        onReportClick={setSelectedReport}
+        onReportClick={(report) => {
+          setSelectedReport(report);
+          // Close mobile sidebar when selecting a report
+          if (isMobile) setIsMobileSidebarOpen(false);
+        }}
         selectedCategory={selectedCategory}
         onCategoryFilter={setSelectedCategory}
       />
@@ -141,7 +153,7 @@ function App() {
       {/* Map */}
       <div
         className={`transition-all duration-300 ${
-          isSidebarExpanded ? "ml-96" : "ml-16"
+          isMobile ? "ml-0" : "ml-96"
         }`}
       >
         <MapView

@@ -1,22 +1,24 @@
-import { useState } from 'react';
-import { FiMenu, FiPlus, FiFilter, FiList, FiX } from 'react-icons/fi';
+import { useState, memo } from 'react';
+import { FiMenu, FiPlus, FiFilter, FiX } from 'react-icons/fi';
 import type { Report, ReportCategory } from '../../types';
 import { REPORT_CATEGORIES } from '../../utils/dummyData';
 
 interface SidebarProps {
   reports: Report[];
-  isExpanded: boolean;
-  onToggleExpanded: () => void;
+  isMobile: boolean;
+  isVisible: boolean;
+  onToggleMobile: () => void;
   onCreateReport: () => void;
   onReportClick?: (report: Report) => void;
   selectedCategory?: ReportCategory | 'all';
   onCategoryFilter: (category: ReportCategory | 'all') => void;
 }
 
-export const Sidebar = ({
+const SidebarComponent = ({
   reports,
-  isExpanded,
-  onToggleExpanded,
+  isMobile,
+  isVisible,
+  onToggleMobile,
   onCreateReport,
   onReportClick,
   selectedCategory = 'all',
@@ -26,57 +28,105 @@ export const Sidebar = ({
 
   const userReports = reports.filter(report => report.userId === 'user1'); // Mock current user
 
-  return (
-    <div
-      className={`fixed left-0 top-0 h-full bg-white shadow-lg transition-all duration-300 z-10 ${
-        isExpanded ? 'w-96' : 'w-16'
-      }`}
-    >
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+  // Mobile: overlay mode, Desktop: always visible
+  const sidebarPosition = isMobile ? 'fixed' : 'fixed';
+  const sidebarWidth = isVisible ? (isMobile ? '320px' : '384px') : '0px';
+  const sidebarTransform = isMobile && !isVisible ? 'translateX(-100%)' : 'translateX(0)';
+  
+  if (isMobile && !isVisible) {
+    // Mobile collapsed: show floating create button
+    return (
+      <>
+        {/* Floating hamburger menu */}
         <button
-          onClick={onToggleExpanded}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          onClick={onToggleMobile}
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '20px',
+            zIndex: 1000,
+            backgroundColor: 'white',
+            padding: '12px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            border: 'none',
+            cursor: 'pointer'
+          }}
         >
-          {isExpanded ? <FiX size={20} /> : <FiMenu size={20} />}
+          <FiMenu size={20} />
         </button>
         
-        {isExpanded && (
-          <h1 className="text-xl font-bold text-gray-800">Meldwas</h1>
-        )}
-      </div>
+        {/* Floating create button */}
+        <button
+          onClick={onCreateReport}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            zIndex: 1000,
+            backgroundColor: '#2563eb',
+            color: 'white',
+            padding: '16px',
+            borderRadius: '50%',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          <FiPlus size={24} />
+        </button>
+      </>
+    );
+  }
 
-      {/* Compact view */}
-      {!isExpanded && (
-        <div className="p-2 space-y-4">
-          <button
-            onClick={onCreateReport}
-            className="w-12 h-12 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
-            title="Create Report"
-          >
-            <FiPlus size={20} />
-          </button>
-          
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="w-12 h-12 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
-            title="Filter Reports"
-          >
-            <FiFilter size={20} />
-          </button>
-          
-          <button
-            onClick={onToggleExpanded}
-            className="w-12 h-12 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
-            title="My Reports"
-          >
-            <FiList size={20} />
-          </button>
-        </div>
+  return (
+    <>
+      {/* Mobile backdrop */}
+      {isMobile && isVisible && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 999
+          }}
+          onClick={onToggleMobile}
+        />
       )}
+      
+      {/* Sidebar */}
+      <div
+        style={{
+          position: sidebarPosition,
+          left: 0,
+          top: 0,
+          height: '100vh',
+          width: sidebarWidth,
+          backgroundColor: 'white',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+          transform: sidebarTransform,
+          transition: 'all 0.3s ease-in-out',
+          zIndex: isMobile ? 1000 : 10,
+          overflow: 'hidden'
+        }}
+      >
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-gray-800">Meldwas</h1>
+          {isMobile && (
+            <button
+              onClick={onToggleMobile}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <FiX size={20} />
+            </button>
+          )}
+        </div>
 
-      {/* Expanded view */}
-      {isExpanded && (
+        {/* Content - Always expanded */}
         <div className="p-4 space-y-6">
           {/* Action buttons */}
           <div className="space-y-3">
@@ -170,7 +220,10 @@ export const Sidebar = ({
             </div>
           </div>
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 };
+
+// Memoized export for performance
+export const Sidebar = memo(SidebarComponent);

@@ -31,6 +31,13 @@ export const ReportForm = ({ isOpen, onClose, onSubmit, initialLocation }: Repor
         location: initialLocation
       }));
       setIsLocationSet(true);
+    } else {
+      // Reset location when initialLocation becomes null
+      setFormData(prev => ({
+        ...prev,
+        location: { lat: 0, lng: 0 }
+      }));
+      setIsLocationSet(false);
     }
   }, [initialLocation]);
 
@@ -121,8 +128,8 @@ export const ReportForm = ({ isOpen, onClose, onSubmit, initialLocation }: Repor
                 alignItems: 'center',
                 justifyContent: 'center'
               }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+              onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#f3f4f6'}
+              onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = 'transparent'}
             >
               <FiX size={20} />
             </button>

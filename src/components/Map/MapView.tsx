@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { useEffect, useState, memo } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { Location, Report } from '../../types';
 import { getCategoryIcon } from '../../utils/categoryIcons';
@@ -20,7 +20,19 @@ interface MapViewProps {
   selectedReport?: Report | null;
 }
 
-export const MapView = ({ reports, onMapClick, onReportClick }: MapViewProps) => {
+// Component to handle map clicks
+function MapClickHandler({ onMapClick }: { onMapClick?: (location: Location) => void }) {
+  useMapEvents({
+    click: (e) => {
+      if (onMapClick) {
+        onMapClick({ lat: e.latlng.lat, lng: e.latlng.lng });
+      }
+    },
+  });
+  return null;
+}
+
+const MapViewComponent = ({ reports, onMapClick, onReportClick }: MapViewProps) => {
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [mapCenter, setMapCenter] = useState<Location>({ lat: 52.5200, lng: 13.4050 }); // Default to Berlin
 
@@ -38,26 +50,25 @@ export const MapView = ({ reports, onMapClick, onReportClick }: MapViewProps) =>
         },
         (error) => {
           console.warn('Geolocation error:', error);
+          // Keep default Berlin location on error
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 10000, // 10 seconds timeout
+          maximumAge: 300000, // Accept cached position up to 5 minutes old
         }
       );
     }
   }, []);
 
-  const handleMapClick = (e: L.LeafletMouseEvent) => {
-    if (onMapClick) {
-      onMapClick({ lat: e.latlng.lat, lng: e.latlng.lng });
-    }
-  };
 
   return (
     <MapContainer
       center={[mapCenter.lat, mapCenter.lng]}
       zoom={13}
       style={{ height: '100vh', width: '100%' }}
-      whenReady={(map) => {
-        map.target.on('click', handleMapClick);
-      }}
     >
+      <MapClickHandler onMapClick={onMapClick} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -76,9 +87,6 @@ export const MapView = ({ reports, onMapClick, onReportClick }: MapViewProps) =>
           key={report.id}
           position={[report.location.lat, report.location.lng]}
           icon={getCategoryIcon(report.category)}
-          eventHandlers={{
-            click: () => onReportClick?.(report),
-          }}
         >
           <Popup>
             <div className="p-2 min-w-[200px]">
@@ -111,3 +119,6 @@ export const MapView = ({ reports, onMapClick, onReportClick }: MapViewProps) =>
     </MapContainer>
   );
 };
+
+// Memoized export for performance
+export const MapView = memo(MapViewComponent);

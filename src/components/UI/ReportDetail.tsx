@@ -31,28 +31,71 @@ export const ReportDetail = ({ report, onClose, onVote, onAddComment }: ReportDe
   const categoryColor = getCategoryColor(report.category);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '16px'
+      }}
+    >
+      <div 
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          width: '100%',
+          maxWidth: '672px',
+          maxHeight: '90vh',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">{report.title}</h2>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
+        <div style={{ padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <div style={{ flex: 1 }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px', margin: 0 }}>
+                {report.title}
+              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '14px', color: '#4b5563' }}>
                 <span
-                  className="px-2 py-1 rounded text-white text-xs font-medium"
-                  style={{ backgroundColor: categoryColor }}
+                  style={{ 
+                    backgroundColor: categoryColor,
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    color: 'white',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}
                 >
                   {report.category.replace('_', ' ').toUpperCase()}
                 </span>
                 <span
-                  className={`px-2 py-1 rounded text-xs font-medium ${
-                    report.status === 'published'
-                      ? 'bg-green-100 text-green-800'
-                      : report.status === 'pending'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    backgroundColor: report.status === 'published' 
+                      ? '#dcfce7' 
+                      : report.status === 'pending' 
+                      ? '#fef3c7' 
+                      : '#f3f4f6',
+                    color: report.status === 'published' 
+                      ? '#166534' 
+                      : report.status === 'pending' 
+                      ? '#92400e' 
+                      : '#374151'
+                  }}
                 >
                   {report.status.toUpperCase()}
                 </span>
@@ -60,7 +103,18 @@ export const ReportDetail = ({ report, onClose, onVote, onAddComment }: ReportDe
             </div>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              style={{
+                padding: '4px',
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#f3f4f6'}
+              onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = 'transparent'}
             >
               <FiX size={20} />
             </button>
@@ -68,7 +122,7 @@ export const ReportDetail = ({ report, onClose, onVote, onAddComment }: ReportDe
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
           {/* Report Details */}
           <div className="mb-6">
             <div className="mb-4">
