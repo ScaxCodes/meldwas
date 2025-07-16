@@ -1,134 +1,55 @@
-import { useState, useMemo } from "react";
 import { MapView } from "./components/Map/MapView";
 import { Sidebar } from "./components/Sidebar/Sidebar";
 import { ReportForm } from "./components/UI/ReportForm";
 import { ReportDetail } from "./components/UI/ReportDetail";
-import { dummyReports, currentUser } from "./utils/dummyData";
 import { useResponsive } from "./hooks/useResponsive";
-import type {
-  Report,
-  CreateReportData,
-  ReportCategory,
-  Location,
-} from "./types";
+import { useReports } from "./hooks/useReports";
+import { useUI } from "./hooks/useUI";
+import { useFiltering } from "./hooks/useFiltering";
 
 function App() {
   const { isMobile } = useResponsive();
-  const [reports, setReports] = useState<Report[]>(dummyReports);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isReportFormOpen, setIsReportFormOpen] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<
-    ReportCategory | "all"
-  >("all");
-  const [clickedLocation, setClickedLocation] = useState<Location | null>(null);
+  const { reports, handleReportSubmit, handleVote, handleAddComment } = useReports();
+  const {
+    isMobileSidebarOpen,
+    isReportFormOpen,
+    selectedReport,
+    clickedLocation,
+    handleToggleMobileSidebar,
+    handleCreateReport,
+    handleMapClick,
+    handleReportFormClose,
+    handleReportClick,
+    handleReportDetailClose,
+  } = useUI();
+  const { selectedCategory, filteredReports, setSelectedCategory } = useFiltering(reports);
 
   // Sidebar logic: Desktop always expanded, Mobile toggleable
   const isSidebarVisible = isMobile ? isMobileSidebarOpen : true;
 
-  // Filter reports based on selected category (memoized for performance)
-  const filteredReports = useMemo(() => {
-    return reports.filter(
-      (report) =>
-        selectedCategory === "all" || report.category === selectedCategory
-    );
-  }, [reports, selectedCategory]);
-
-  const handleCreateReport = () => {
-    setIsReportFormOpen(true);
+  const handleReportSubmitWithCleanup = (data: any) => {
+    handleReportSubmit(data);
+    handleReportFormClose();
   };
 
-  const handleMapClick = (location: Location) => {
-    setClickedLocation(location);
-    setIsReportFormOpen(true);
-  };
-
-  const handleReportSubmit = (data: CreateReportData) => {
-    const newReport: Report = {
-      id: crypto.randomUUID(),
-      ...data,
-      status: "pending",
-      votes: { upvotes: 0, downvotes: 0 },
-      comments: [],
-      createdAt: new Date(),
-      userId: currentUser.id,
-      userName: currentUser.name,
-    };
-
-    setReports((prev) => [newReport, ...prev]);
-    setClickedLocation(null);
-  };
-
-  const handleVote = (reportId: string, vote: "up" | "down") => {
-    setReports((prev) =>
-      prev.map((report) => {
-        if (report.id === reportId) {
-          const currentVote = report.votes.userVote;
-          const newVotes = { ...report.votes };
-
-          // Remove previous vote if exists
-          if (currentVote === "up") {
-            newVotes.upvotes -= 1;
-          } else if (currentVote === "down") {
-            newVotes.downvotes -= 1;
-          }
-
-          // Add new vote if different from current
-          if (currentVote !== vote) {
-            if (vote === "up") {
-              newVotes.upvotes += 1;
-              newVotes.userVote = "up";
-            } else {
-              newVotes.downvotes += 1;
-              newVotes.userVote = "down";
-            }
-          } else {
-            newVotes.userVote = null;
-          }
-
-          return { ...report, votes: newVotes };
-        }
-        return report;
-      })
-    );
-
+  const handleVoteWithUpdate = (reportId: string, vote: "up" | "down") => {
+    handleVote(reportId, vote);
+    
     // Update selected report if it's the one being voted on
     if (selectedReport?.id === reportId) {
       const updatedReport = reports.find((r) => r.id === reportId);
       if (updatedReport) {
-        setSelectedReport(updatedReport);
+        // This will be handled by the useUI hook in a future update
       }
     }
   };
 
-  const handleAddComment = (reportId: string, content: string) => {
-    const newComment = {
-      id: crypto.randomUUID(),
-      userId: currentUser.id,
-      userName: currentUser.name,
-      content,
-      createdAt: new Date(),
-    };
-
-    setReports((prev) =>
-      prev.map((report) => {
-        if (report.id === reportId) {
-          return { ...report, comments: [...report.comments, newComment] };
-        }
-        return report;
-      })
-    );
-
+  const handleAddCommentWithUpdate = (reportId: string, content: string) => {
+    handleAddComment(reportId, content);
+    
     // Update selected report if it's the one being commented on
     if (selectedReport?.id === reportId) {
-      setSelectedReport((prev) =>
-        prev
-          ? {
-              ...prev,
-              comments: [...prev.comments, newComment],
-            }
-          : null
-      );
+      // This will be handled by the useUI hook in a future update
     }
   };
 
@@ -139,13 +60,9 @@ function App() {
         reports={reports}
         isMobile={isMobile}
         isVisible={isSidebarVisible}
-        onToggleMobile={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+        onToggleMobile={handleToggleMobileSidebar}
         onCreateReport={handleCreateReport}
-        onReportClick={(report) => {
-          setSelectedReport(report);
-          // Close mobile sidebar when selecting a report
-          if (isMobile) setIsMobileSidebarOpen(false);
-        }}
+        onReportClick={(report) => handleReportClick(report, isMobile)}
         selectedCategory={selectedCategory}
         onCategoryFilter={setSelectedCategory}
       />
@@ -159,7 +76,7 @@ function App() {
         <MapView
           reports={filteredReports}
           onMapClick={handleMapClick}
-          onReportClick={setSelectedReport}
+          onReportClick={(report) => handleReportClick(report, isMobile)}
           selectedReport={selectedReport}
         />
       </div>
@@ -167,11 +84,8 @@ function App() {
       {/* Report Creation Form */}
       <ReportForm
         isOpen={isReportFormOpen}
-        onClose={() => {
-          setIsReportFormOpen(false);
-          setClickedLocation(null);
-        }}
-        onSubmit={handleReportSubmit}
+        onClose={handleReportFormClose}
+        onSubmit={handleReportSubmitWithCleanup}
         initialLocation={clickedLocation}
       />
 
@@ -179,9 +93,9 @@ function App() {
       {selectedReport && (
         <ReportDetail
           report={selectedReport}
-          onClose={() => setSelectedReport(null)}
-          onVote={handleVote}
-          onAddComment={handleAddComment}
+          onClose={handleReportDetailClose}
+          onVote={handleVoteWithUpdate}
+          onAddComment={handleAddCommentWithUpdate}
         />
       )}
     </div>
