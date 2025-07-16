@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { FiThumbsUp, FiThumbsDown, FiMessageSquare, FiX, FiSend } from 'react-icons/fi';
+import { FiThumbsUp, FiMessageSquare, FiX, FiSend } from 'react-icons/fi';
 import type { Report } from '../../types';
 import { getCategoryColor } from '../../utils/categoryIcons';
 
 interface ReportDetailProps {
   report: Report;
   onClose: () => void;
-  onVote: (reportId: string, vote: 'up' | 'down') => void;
+  onSupport: (reportId: string) => void;
   onAddComment: (reportId: string, comment: string) => void;
 }
 
-export const ReportDetail = ({ report, onClose, onVote, onAddComment }: ReportDetailProps) => {
+export const ReportDetail = ({ report, onClose, onSupport, onAddComment }: ReportDetailProps) => {
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
@@ -24,8 +24,8 @@ export const ReportDetail = ({ report, onClose, onVote, onAddComment }: ReportDe
     setIsSubmittingComment(false);
   };
 
-  const handleVote = (vote: 'up' | 'down') => {
-    onVote(report.id, vote);
+  const handleSupport = () => {
+    onSupport(report.id);
   };
 
   const categoryColor = getCategoryColor(report.category);
@@ -145,34 +145,20 @@ export const ReportDetail = ({ report, onClose, onVote, onAddComment }: ReportDe
             </div>
           </div>
 
-          {/* Voting */}
+          {/* Support */}
           <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Community Feedback</h3>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => handleVote('up')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                  report.votes.userVote === 'up'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-white text-gray-600 hover:bg-green-50 hover:text-green-700'
-                }`}
-              >
-                <FiThumbsUp size={16} />
-                <span>{report.votes.upvotes}</span>
-              </button>
-              
-              <button
-                onClick={() => handleVote('down')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                  report.votes.userVote === 'down'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-white text-gray-600 hover:bg-red-50 hover:text-red-700'
-                }`}
-              >
-                <FiThumbsDown size={16} />
-                <span>{report.votes.downvotes}</span>
-              </button>
-            </div>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Community Support</h3>
+            <button
+              onClick={handleSupport}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                report.votes.userSupport
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-white text-gray-600 hover:bg-green-50 hover:text-green-700'
+              }`}
+            >
+              <FiThumbsUp size={16} />
+              <span className="font-medium">Support ({report.votes.supports})</span>
+            </button>
           </div>
 
           {/* Comments */}

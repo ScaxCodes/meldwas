@@ -100,7 +100,7 @@ const MapViewComponent = ({ reports, onMapClick, onReportClick }: MapViewProps) 
               )}
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-gray-500">
-                  ↑ {report.votes.upvotes} ↓ {report.votes.downvotes}
+                  ↑ {report.votes.supports} supports
                 </span>
                 <span className="text-xs text-gray-500">
                   {report.comments.length} comments

@@ -211,7 +211,7 @@ const SidebarComponent = ({
                         {report.status}
                       </span>
                       <span className="text-xs text-gray-500">
-                        ↑ {report.votes.upvotes}
+                        ↑ {report.votes.supports}
                       </span>
                     </div>
                   </div>

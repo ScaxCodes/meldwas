@@ -10,7 +10,7 @@ export const useReports = () => {
       id: crypto.randomUUID(),
       ...data,
       status: "pending",
-      votes: { upvotes: 0, downvotes: 0 },
+      votes: { supports: 0 },
       comments: [],
       createdAt: new Date(),
       userId: currentUser.id,
@@ -20,31 +20,20 @@ export const useReports = () => {
     setReports((prev) => [newReport, ...prev]);
   }, []);
 
-  const handleVote = useCallback((reportId: string, vote: "up" | "down") => {
+  const handleSupport = useCallback((reportId: string) => {
     setReports((prev) =>
       prev.map((report) => {
         if (report.id === reportId) {
-          const currentVote = report.votes.userVote;
+          const currentSupport = report.votes.userSupport;
           const newVotes = { ...report.votes };
 
-          // Remove previous vote if exists
-          if (currentVote === "up") {
-            newVotes.upvotes -= 1;
-          } else if (currentVote === "down") {
-            newVotes.downvotes -= 1;
-          }
-
-          // Add new vote if different from current
-          if (currentVote !== vote) {
-            if (vote === "up") {
-              newVotes.upvotes += 1;
-              newVotes.userVote = "up";
-            } else {
-              newVotes.downvotes += 1;
-              newVotes.userVote = "down";
-            }
+          // Toggle support
+          if (currentSupport) {
+            newVotes.supports -= 1;
+            newVotes.userSupport = null;
           } else {
-            newVotes.userVote = null;
+            newVotes.supports += 1;
+            newVotes.userSupport = true;
           }
 
           return { ...report, votes: newVotes };
@@ -76,7 +65,7 @@ export const useReports = () => {
   return {
     reports,
     handleReportSubmit,
-    handleVote,
+    handleSupport,
     handleAddComment,
   };
 };

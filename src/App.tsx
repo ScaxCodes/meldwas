@@ -6,10 +6,11 @@ import { useResponsive } from "./hooks/useResponsive";
 import { useReports } from "./hooks/useReports";
 import { useUI } from "./hooks/useUI";
 import { useFiltering } from "./hooks/useFiltering";
+import type { CreateReportData } from "./types";
 
 function App() {
   const { isMobile } = useResponsive();
-  const { reports, handleReportSubmit, handleVote, handleAddComment } = useReports();
+  const { reports, handleReportSubmit, handleSupport, handleAddComment } = useReports();
   const {
     isMobileSidebarOpen,
     isReportFormOpen,
@@ -27,30 +28,17 @@ function App() {
   // Sidebar logic: Desktop always expanded, Mobile toggleable
   const isSidebarVisible = isMobile ? isMobileSidebarOpen : true;
 
-  const handleReportSubmitWithCleanup = (data: any) => {
+  const handleReportSubmitWithCleanup = (data: CreateReportData) => {
     handleReportSubmit(data);
     handleReportFormClose();
   };
 
-  const handleVoteWithUpdate = (reportId: string, vote: "up" | "down") => {
-    handleVote(reportId, vote);
-    
-    // Update selected report if it's the one being voted on
-    if (selectedReport?.id === reportId) {
-      const updatedReport = reports.find((r) => r.id === reportId);
-      if (updatedReport) {
-        // This will be handled by the useUI hook in a future update
-      }
-    }
+  const handleSupportWithUpdate = (reportId: string) => {
+    handleSupport(reportId);
   };
 
   const handleAddCommentWithUpdate = (reportId: string, content: string) => {
     handleAddComment(reportId, content);
-    
-    // Update selected report if it's the one being commented on
-    if (selectedReport?.id === reportId) {
-      // This will be handled by the useUI hook in a future update
-    }
   };
 
   return (
@@ -90,14 +78,17 @@ function App() {
       />
 
       {/* Report Detail Modal */}
-      {selectedReport && (
-        <ReportDetail
-          report={selectedReport}
-          onClose={handleReportDetailClose}
-          onVote={handleVoteWithUpdate}
-          onAddComment={handleAddCommentWithUpdate}
-        />
-      )}
+      {selectedReport && (() => {
+        const currentReport = reports.find(r => r.id === selectedReport.id);
+        return currentReport ? (
+          <ReportDetail
+            report={currentReport}
+            onClose={handleReportDetailClose}
+            onSupport={handleSupportWithUpdate}
+            onAddComment={handleAddCommentWithUpdate}
+          />
+        ) : null;
+      })()}
     </div>
   );
 }

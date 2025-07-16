@@ -25,9 +25,8 @@ export interface Comment {
 }
 
 export interface Votes {
-  upvotes: number;
-  downvotes: number;
-  userVote?: 'up' | 'down' | null;
+  supports: number;
+  userSupport?: boolean | null;
 }
 
 export interface Report {
